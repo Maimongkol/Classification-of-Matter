@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>การจำแนกสาร — วิทยาศาสตร์ ม.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Prompt:wght@500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--green-mid:#5DCAA5;
+  --purple:#7F77DD;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --amber:#EF9F27;--amber-light:#FAEEDA;--amber-dark:#633806;
+  --coral:#D85A30;--coral-light:#FAECE7;--coral-dark:#4A1B0C;
+  --gray:#888780;--gray-light:#F1EFE8;--gray-dark:#2C2C2A;
+  --blue:#378ADD;--blue-light:#E6F1FB;--blue-dark:#042C53;
+  --bg:#f5f7f4;--card:#fff;--text:#1a1a18;--muted:#6b6b66;--border:#e2e0d8;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ===== HEADER ===== */
+.header{background:linear-gradient(135deg,#0F6E56 0%,#1D9E75 50%,#5DCAA5 100%);padding:2rem 1.5rem 1.5rem;text-align:center;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.header-badge{display:inline-block;background:rgba(255,255,255,0.2);color:white;padding:4px 14px;border-radius:999px;font-size:12px;margin-bottom:10px;letter-spacing:.5px;}
+.header h1{font-family:'Prompt',sans-serif;color:white;font-size:clamp(1.6rem,4vw,2.2rem);font-weight:600;position:relative;}
+.header p{color:rgba(255,255,255,0.85);font-size:14px;margin-top:6px;position:relative;}
+
+/* ===== TABS ===== */
+.tab-bar{display:flex;gap:0;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--border);padding:0 1rem;scrollbar-width:none;}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;padding:14px 18px;font-size:13px;font-weight:500;font-family:'Sarabun',sans-serif;color:var(--muted);background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);}
+.tab-btn:hover:not(.active){color:var(--text);background:var(--bg);}
+
+/* ===== SECTIONS ===== */
+.section{display:none;padding:1.5rem;}
+.section.active{display:block;}
+
+/* ===== VIDEO BUTTONS ===== */
+.video-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.5rem;}
+.vid-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--coral-light);color:var(--coral-dark);border:1px solid #F0997B;border-radius:999px;font-size:13px;font-weight:500;font-family:'Sarabun',sans-serif;cursor:pointer;text-decoration:none;transition:all .15s;}
+.vid-btn:hover{background:#F0997B;color:white;}
+.vid-btn svg{width:16px;height:16px;flex-shrink:0;}
+.content-btn{background:#E6F1FB;color:var(--blue-dark);border-color:#85B7EB;}
+.content-btn:hover{background:#85B7EB;color:white;}
+
+/* ===== CARD ===== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+.section-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:1.25rem;line-height:1.6;}
+
+/* ===== MAP ===== */
+.map-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* ===== CLASSIFY GAME ===== */
+.substance-pool{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;min-height:48px;}
+.sub-chip{padding:7px 14px;background:var(--card);border:1.5px dashed var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:grab;transition:all .15s;user-select:none;}
+.sub-chip:hover{border-color:var(--green);background:var(--green-light);}
+.sub-chip.dragging{opacity:.35;}
+.drop-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+.drop-col{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;}
+.drop-col-head{font-size:13px;font-weight:600;padding:5px 10px;border-radius:var(--radius-sm);display:inline-block;margin-bottom:10px;}
+.drop-area{min-height:60px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;transition:background .15s;}
+.drop-area.over{background:var(--green-light);border-color:var(--green);}
+.placed{padding:5px 12px;border-radius:999px;font-size:12px;cursor:pointer;font-weight:500;border:1px solid;}
+.placed.neutral{background:#E1F5EE;color:#085041;border-color:var(--green-mid);}
+.placed.correct{background:#EAF3DE;color:#173404;border-color:#639922;}
+.placed.wrong{background:var(--coral-light);color:var(--coral-dark);border-color:var(--coral);}
+.game-btns{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap;}
+.btn-primary{padding:10px 22px;background:var(--green);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:var(--green-dark);}
+.btn-secondary{padding:10px 22px;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Sarabun',sans-serif;cursor:pointer;}
+.btn-secondary:hover{background:var(--bg);}
+.score-pill{display:inline-block;padding:8px 20px;background:var(--blue-light);color:var(--blue-dark);border-radius:999px;font-size:14px;font-weight:600;margin-top:1rem;}
+
+/* ===== SEPARATION ===== */
+.method-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.method-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;cursor:pointer;transition:all .15s;}
+.method-card:hover,.method-card.sel{border-color:var(--green);box-shadow:0 0 0 2px rgba(29,158,117,.12);}
+.method-icon{font-size:26px;margin-bottom:8px;}
+.method-name{font-size:14px;font-weight:600;color:var(--text);}
+.method-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5;}
+.method-detail{background:var(--green-light);border-radius:var(--radius);padding:1.25rem;margin-top:1rem;display:none;}
+.method-detail.show{display:block;}
+.method-detail h3{font-size:15px;font-weight:600;color:var(--green-dark);margin-bottom:8px;}
+.method-detail p{font-size:14px;color:#0F6E56;line-height:1.7;}
+.ex-tag{display:inline-block;margin:4px 4px 0 0;background:white;border:1px solid var(--green-mid);color:#085041;border-radius:999px;padding:3px 10px;font-size:12px;}
+
+/* ===== ELEMENTS ===== */
+.elem-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;}
+.e-btn{width:56px;height:56px;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--card);transition:all .15s;}
+.e-btn:hover{border-color:var(--purple);}
+.e-btn.sel{border:2px solid var(--purple);background:var(--purple-light);}
+.e-sym{font-size:17px;font-weight:600;color:var(--text);}
+.e-num{font-size:10px;color:var(--muted);}
+.elem-detail{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:none;margin-top:1rem;}
+.elem-detail.show{display:block;}
+.e-big{width:70px;height:70px;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.e-big-sym{font-size:26px;font-weight:700;}
+.e-big-num{font-size:12px;margin-top:2px;}
+.e-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem;}
+.e-info{background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;}
+.e-label{font-size:11px;color:var(--muted);}
+.e-val{font-size:14px;font-weight:600;color:var(--text);margin-top:2px;}
+.type-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem;}
+.type-pill{padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;}
+
+/* ===== QUIZ ===== */
+.quiz-info{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap;}
+.q-count{background:var(--green-light);color:var(--green-dark);padding:5px 14px;border-radius:999px;font-size:13px;font-weight:600;}
+.q-progress{flex:1;height:6px;background:var(--border);border-radius:999px;min-width:80px;}
+.q-progress-bar{height:100%;background:var(--green);border-radius:999px;transition:width .3s;}
+.quiz-q-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:10px;}
+.quiz-q-text{font-size:15px;font-weight:600;color:var(--text);margin-bottom:1rem;line-height:1.6;}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;}
+.quiz-opt{padding:11px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Sarabun',sans-serif;cursor:pointer;background:var(--bg);color:var(--text);text-align:left;transition:all .15s;}
+.quiz-opt:hover:not(:disabled){border-color:var(--green);background:var(--green-light);color:#085041;}
+.quiz-opt.correct{background:#EAF3DE!important;color:#173404!important;border-color:#639922!important;font-weight:600;}
+.quiz-opt.wrong{background:var(--coral-light)!important;color:var(--coral-dark)!important;border-color:var(--coral)!important;}
+.quiz-opt:disabled{cursor:default;}
+.explain{margin-top:10px;font-size:13px;color:var(--muted);background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);display:none;line-height:1.7;border-left:3px solid var(--green-mid);}
+.explain.show{display:block;}
+.quiz-finish{background:var(--green-light);border-radius:var(--radius);padding:2rem;text-align:center;display:none;margin-top:1rem;}
+.quiz-finish.show{display:block;}
+.big-score{font-size:52px;font-weight:700;color:var(--green-dark);font-family:'Prompt',sans-serif;}
+.score-msg{font-size:16px;color:var(--green);margin-top:6px;font-weight:500;}
+.retry-btn{margin-top:1.25rem;padding:12px 28px;background:var(--green);color:white;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer;}
+.retry-btn:hover{background:var(--green-dark);}
+
+/* ===== FOOTER ===== */
+.footer{text-align:center;padding:1.5rem;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:1rem;}
+
+@media(max-width:500px){
+  .drop-cols{grid-template-columns:1fr;}
+  .method-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">วิทยาศาสตร์ ม.2</div>
+  <h1>การจำแนกสาร</h1>
+  <p>Classification of Matter — สื่อ Interactive ครบวงจร</p>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('map',this)">🗺️ แผนผังสาร</button>
+  <button class="tab-btn" onclick="showTab('classify',this)">🎮 จำแนกสาร</button>
+  <button class="tab-btn" onclick="showTab('separate',this)">🔬 การแยกสาร</button>
+  <button class="tab-btn" onclick="showTab('element',this)">⚛️ ธาตุและสาร</button>
+  <button class="tab-btn" onclick="showTab('quiz',this)">📝 แบบทดสอบ</button>
+</div>
+
+<!-- ==================== MAP ==================== -->
+<div class="section active" id="tab-map">
+  <div class="card">
+    <div class="section-title">แผนผังการจำแนกสาร</div>
+    <div class="section-sub">สารแบ่งออกเป็น 2 กลุ่มหลัก: สารบริสุทธิ์ (มีองค์ประกอบแน่นอน) และสารผสม (ผสมสารตั้งแต่ 2 ชนิดขึ้นไป แยกออกได้ทางกายภาพ)</div>
+    <div class="video-bar">
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/12433-022526" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        การแยกสาร (คลิป)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33814" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+        การแยกสารผสม (เนื้อหา)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33816" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+        สารบริสุทธิ์ (เนื้อหา)
+      </a>
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/32631-045553" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        สสารและสมบัติของสาร (คลิป)
+      </a>
+    </div>
+    <div class="map-wrap">
+      <svg viewBox="0 0 680 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#1D9E75"/>
+          </marker>
+        </defs>
+        <rect x="240" y="10" width="200" height="44" rx="10" fill="#1D9E75"/>
+        <text x="340" y="37" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Sarabun">สาร (Matter)</text>
+
+        <rect x="60" y="96" width="180" height="44" rx="10" fill="#0F6E56"/>
+        <text x="150" y="122" text-anchor="middle" font-size="14" font-weight="600" fill="white" font-family="Sarabun">สารบริสุทธิ์ (Pure Substance)</text>
+
+        <rect x="440" y="96" width="180" height="44" rx="10" fill="#1D9E75" opacity=".85"/>
+        <text x="530" y="116" text-anchor="middle" font-size="14" font-weight="600" fill="white" font-family="Sarabun">สารผสม</text>
+        <text x="530" y="133" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.85)" font-family="Sarabun">(Mixture)</text>
+
+        <line x1="290" y1="54" x2="200" y2="96" stroke="#1D9E75" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="390" y1="54" x2="480" y2="96" stroke="#1D9E75" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="10" y="186" width="140" height="44" rx="8" fill="#AFA9EC"/>
+        <text x="80" y="205" text-anchor="middle" font-size="13" font-weight="600" fill="#26215C" font-family="Sarabun">ธาตุ</text>
+        <text x="80" y="221" text-anchor="middle" font-size="11" fill="#3C3489" font-family="Sarabun">(Element)</text>
+
+        <rect x="170" y="186" width="140" height="44" rx="8" fill="#AFA9EC"/>
+        <text x="240" y="205" text-anchor="middle" font-size="13" font-weight="600" fill="#26215C" font-family="Sarabun">สารประกอบ</text>
+        <text x="240" y="221" text-anchor="middle" font-size="11" fill="#3C3489" font-family="Sarabun">(Compound)</text>
+
+        <line x1="100" y1="140" x2="80" y2="186" stroke="#AFA9EC" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="185" y1="140" x2="240" y2="186" stroke="#AFA9EC" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="380" y="186" width="140" height="44" rx="8" fill="#9FE1CB"/>
+        <text x="450" y="205" text-anchor="middle" font-size="13" font-weight="600" fill="#04342C" font-family="Sarabun">สารละลาย</text>
+        <text x="450" y="221" text-anchor="middle" font-size="11" fill="#085041" font-family="Sarabun">(Solution)</text>
+
+        <rect x="540" y="186" width="130" height="44" rx="8" fill="#9FE1CB"/>
+        <text x="605" y="205" text-anchor="middle" font-size="13" font-weight="600" fill="#04342C" font-family="Sarabun">คอลลอยด์</text>
+        <text x="605" y="221" text-anchor="middle" font-size="11" fill="#085041" font-family="Sarabun">(Colloid)</text>
+
+        <line x1="490" y1="140" x2="450" y2="186" stroke="#5DCAA5" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="570" y1="140" x2="605" y2="186" stroke="#5DCAA5" stroke-width="2" marker-end="url(#arr)"/>
+
+        <rect x="10" y="270" width="140" height="30" rx="6" fill="#EEEDFE"/>
+        <text x="80" y="289" text-anchor="middle" font-size="12" fill="#3C3489" font-family="Sarabun">เหล็ก, ทอง, O₂, H₂</text>
+        <line x1="80" y1="230" x2="80" y2="270" stroke="#AFA9EC" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <rect x="165" y="270" width="150" height="30" rx="6" fill="#EEEDFE"/>
+        <text x="240" y="289" text-anchor="middle" font-size="12" fill="#3C3489" font-family="Sarabun">น้ำ (H₂O), NaCl</text>
+        <line x1="240" y1="230" x2="240" y2="270" stroke="#AFA9EC" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <rect x="370" y="270" width="155" height="30" rx="6" fill="#E1F5EE"/>
+        <text x="447" y="289" text-anchor="middle" font-size="12" fill="#04342C" font-family="Sarabun">น้ำเกลือ, น้ำหวาน</text>
+        <line x1="450" y1="230" x2="447" y2="270" stroke="#5DCAA5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <rect x="537" y="270" width="133" height="30" rx="6" fill="#E1F5EE"/>
+        <text x="604" y="289" text-anchor="middle" font-size="12" fill="#04342C" font-family="Sarabun">นม, หมอก, เจล</text>
+        <line x1="605" y1="230" x2="604" y2="270" stroke="#5DCAA5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <rect x="10" y="330" width="14" height="14" rx="3" fill="#1D9E75"/>
+        <text x="28" y="342" font-size="11" fill="#6b6b66" font-family="Sarabun">สารบริสุทธิ์</text>
+        <rect x="120" y="330" width="14" height="14" rx="3" fill="#AFA9EC"/>
+        <text x="138" y="342" font-size="11" fill="#6b6b66" font-family="Sarabun">ธาตุ / สารประกอบ</text>
+        <rect x="270" y="330" width="14" height="14" rx="3" fill="#9FE1CB"/>
+        <text x="288" y="342" font-size="11" fill="#6b6b66" font-family="Sarabun">สารผสม</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CLASSIFY ==================== -->
+<div class="section" id="tab-classify">
+  <div class="card">
+    <div class="section-title">🎮 เกมจำแนกสาร</div>
+    <div class="section-sub">ลากสารไปวางในกลุ่มที่ถูกต้อง — คลิกสารที่วางแล้วเพื่อนำออก</div>
+    <div class="video-bar">
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/12433-022526" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> การแยกสาร (คลิป)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33814" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> การแยกสารผสม (เนื้อหา)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33816" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> สารบริสุทธิ์ (เนื้อหา)
+      </a>
+    </div>
+    <div class="substance-pool" id="pool"></div>
+    <div class="drop-cols" id="dropCols"></div>
+    <div class="game-btns">
+      <button class="btn-primary" onclick="checkGame()">ตรวจคำตอบ</button>
+      <button class="btn-secondary" onclick="resetGame()">เริ่มใหม่</button>
+    </div>
+    <div id="gameScore"></div>
+  </div>
+</div>
+
+<!-- ==================== SEPARATE ==================== -->
+<div class="section" id="tab-separate">
+  <div class="card">
+    <div class="section-title">วิธีการแยกสาร</div>
+    <div class="section-sub">คลิกที่การ์ดเพื่อดูรายละเอียดและตัวอย่าง</div>
+    <div class="video-bar">
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/12433-022526" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> การแยกสาร (คลิป)
+      </a>
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/10309-018115" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> การกลั่นลำดับส่วน (คลิป)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33814" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> การแยกสารผสม (เนื้อหา)
+      </a>
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/32631-045553" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> สสารและสมบัติของสาร (คลิป)
+      </a>
+    </div>
+    <div class="method-grid" id="methodGrid"></div>
+    <div class="method-detail" id="methodDetail"></div>
+  </div>
+</div>
+
+<!-- ==================== ELEMENT ==================== -->
+<div class="section" id="tab-element">
+  <div class="card">
+    <div class="section-title">ธาตุในตารางธาตุ</div>
+    <div class="section-sub">เลือกธาตุที่ต้องการดูรายละเอียด — ธาตุที่นักเรียน ม.2 ควรรู้จัก</div>
+    <div class="video-bar">
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/12806-023286" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> สารประกอบและธาตุ (คลิป)
+      </a>
+      <a class="vid-btn" href="https://www.trueplookpanya.com/learning/detail/24909-036991" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> ตารางธาตุ (คลิป)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33817" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> ตารางธาตุ (เนื้อหา)
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/learning/detail/33816" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> สารบริสุทธิ์ (เนื้อหา)
+      </a>
+    </div>
+    <div class="elem-grid" id="elemGrid"></div>
+    <div class="elem-detail" id="elemDetail"></div>
+    <div class="type-pills">
+      <span class="type-pill" style="background:#EEEDFE;color:#3C3489;">⚙️ โลหะ (Metal)</span>
+      <span class="type-pill" style="background:#E1F5EE;color:#04342C;">🌿 อโลหะ (Non-metal)</span>
+      <span class="type-pill" style="background:#FAEEDA;color:#412402;">🔶 กึ่งโลหะ (Metalloid)</span>
+      <span class="type-pill" style="background:#E6F1FB;color:#042C53;">💨 แก๊สมีตระกูล (Noble gas)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== QUIZ ==================== -->
+<div class="section" id="tab-quiz">
+  <div class="card">
+    <div class="section-title">📝 แบบทดสอบ — สุ่ม 10 ข้อ จาก 50 ข้อ</div>
+    <div class="section-sub">แต่ละครั้งจะสุ่มข้อสอบออกมา 10 ข้อ คลิกตอบแล้วจะเห็นคำอธิบาย</div>
+    <div class="video-bar">
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/examination/doexam/2373" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> แบบฝึกหัด ชุดที่ 1
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/examination/doexam/11779" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> แบบฝึกหัด ชุดที่ 2
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/examination/doexam/11839" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> แบบฝึกหัด ชุดที่ 3
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/examination/doexam/7664" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> ตารางธาตุ
+      </a>
+      <a class="vid-btn content-btn" href="https://www.trueplookpanya.com/examination/doexam/8330" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg> ธาตุและสารประกอบ
+      </a>
+    </div>
+    <div class="quiz-info">
+      <span class="q-count" id="qCount">0 / 10</span>
+      <div class="q-progress"><div class="q-progress-bar" id="qBar" style="width:0%"></div></div>
+      <span style="font-size:13px;color:var(--muted);" id="qScore">คะแนน: 0</span>
+    </div>
+    <div id="quizContainer"></div>
+    <div class="quiz-finish" id="quizFinish">
+      <div class="big-score" id="finalScore"></div>
+      <div class="score-msg" id="scoreMsg"></div>
+      <button class="retry-btn" onclick="startQuiz()">สุ่มข้อสอบใหม่ 10 ข้อ</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">สื่อ Interactive วิชาวิทยาศาสตร์ ม.2 | การจำแนกสาร | อ้างอิงเนื้อหาจาก TruePlookpanya</div>
+
+<script>
+// ===== TAB =====
+function showTab(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== CLASSIFY GAME =====
+const substances=[
+  {name:'น้ำ (H₂O)',cat:'compound'},{name:'ทอง (Au)',cat:'element'},
+  {name:'น้ำเกลือ',cat:'mixture'},{name:'ออกซิเจน (O₂)',cat:'element'},
+  {name:'เกลือแกง (NaCl)',cat:'compound'},{name:'น้ำมะนาว',cat:'mixture'},
+  {name:'เหล็ก (Fe)',cat:'element'},{name:'คาร์บอนไดออกไซด์ (CO₂)',cat:'compound'},
+  {name:'อากาศ',cat:'mixture'},{name:'ทองแดง (Cu)',cat:'element'},
+  {name:'แป้งเปียก',cat:'mixture'},{name:'น้ำตาล (C₁₂H₂₂O₁₁)',cat:'compound'},
+  {name:'ไฮโดรเจน (H₂)',cat:'element'},{name:'นม',cat:'mixture'},
+  {name:'แอลกอฮอล์ (C₂H₅OH)',cat:'compound'},
+];
+const cats=[
+  {id:'element',label:'⚛️ ธาตุ (Element)',bg:'#EEEDFE',border:'#AFA9EC',txt:'#26215C'},
+  {id:'compound',label:'🔗 สารประกอบ (Compound)',bg:'#E1F5EE',border:'#5DCAA5',txt:'#04342C'},
+  {id:'mixture',label:'🧪 สารผสม (Mixture)',bg:'#FAEEDA',border:'#FAC775',txt:'#412402'},
+];
+let pool=[],placed={element:[],compound:[],mixture:[]};
+
+function renderGame(){
+  const poolEl=document.getElementById('pool');
+  poolEl.innerHTML='';
+  pool.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='sub-chip';d.textContent=s.name;d.draggable=true;
+    d.addEventListener('dragstart',()=>{d.classList.add('dragging');window._di=i;});
+    d.addEventListener('dragend',()=>d.classList.remove('dragging'));
+    poolEl.appendChild(d);
+  });
+  const colsEl=document.getElementById('dropCols');
+  colsEl.innerHTML='';
+  cats.forEach(c=>{
+    const col=document.createElement('div');col.className='drop-col';
+    const head=document.createElement('div');
+    head.className='drop-col-head';
+    head.style.cssText=`background:${c.bg};color:${c.txt};border:1px solid ${c.border};`;
+    head.textContent=c.label;
+    const area=document.createElement('div');area.className='drop-area';
+    area.addEventListener('dragover',e=>{e.preventDefault();area.classList.add('over');});
+    area.addEventListener('dragleave',()=>area.classList.remove('over'));
+    area.addEventListener('drop',()=>{
+      area.classList.remove('over');
+      if(window._di!==undefined&&pool[window._di]){
+        placed[c.id].push(pool.splice(window._di,1)[0]);
+        window._di=undefined;renderGame();
+      }
+    });
+    placed[c.id].forEach((s,j)=>{
+      const p=document.createElement('span');
+      p.className='placed neutral';p.textContent=s.name;p.title='คลิกเพื่อนำออก';
+      p.onclick=()=>{pool.push(s);placed[c.id].splice(j,1);renderGame();};
+      area.appendChild(p);
+    });
+    col.appendChild(head);col.appendChild(area);colsEl.appendChild(col);
+  });
+  document.getElementById('gameScore').innerHTML='';
+}
+
+function checkGame(){
+  let correct=0,total=0;
+  cats.forEach((c,ci)=>{
+    const area=document.getElementById('dropCols').children[ci].querySelector('.drop-area');
+    placed[c.id].forEach((s,j)=>{
+      total++;if(s.cat===c.id)correct++;
+      area.children[j].className='placed '+(s.cat===c.id?'correct':'wrong');
+    });
+  });
+  const pct=total>0?Math.round(correct/total*100):0;
+  document.getElementById('gameScore').innerHTML=
+    `<div class="score-pill">✅ ถูกต้อง ${correct} / ${total} ข้อ (${pct}%)</div>`;
+}
+
+function resetGame(){
+  pool=[...substances];placed={element:[],compound:[],mixture:[]};renderGame();
+}
+resetGame();
+
+// ===== SEPARATION =====
+const methods=[
+  {icon:'🧲',name:'การใช้แม่เหล็ก',desc:'แยกสารที่มีสมบัติแม่เหล็ก',
+   detail:'ใช้แม่เหล็กดูดสารที่มีสมบัติแม่เหล็ก เช่น เหล็ก นิกเกิล โคบอลต์ ออกจากสารอื่น ง่ายและรวดเร็ว',
+   examples:['แยกผงเหล็กจากทราย','คัดแยกโลหะในโรงงาน','แยกเหล็กจากขยะรีไซเคิล']},
+  {icon:'🫙',name:'การกรอง',desc:'แยกของแข็งออกจากของเหลว',
+   detail:'ใช้วัสดุมีรูพรุน เช่น กระดาษกรอง ผ้า ตะแกรง กรองอนุภาคของแข็งขนาดใหญ่ออกจากของเหลว',
+   examples:['กรองกากกาแฟ','กรองน้ำขุ่น','กรองทรายจากน้ำ','กรองยาสมุนไพร']},
+  {icon:'💧',name:'การระเหย',desc:'แยกตัวถูกละลายออกจากตัวทำละลาย',
+   detail:'ให้ความร้อนจนตัวทำละลาย (เช่น น้ำ) ระเหยออกไป เหลือแต่ตัวถูกละลายเป็นของแข็ง',
+   examples:['ทำเกลือจากน้ำทะเล','ทำน้ำตาลจากน้ำอ้อย','ผลิตผงซักฟอก']},
+  {icon:'🌀',name:'การตกตะกอน',desc:'แยกอนุภาคโดยการนิ่ง/หมุน',
+   detail:'ปล่อยให้อนุภาคหนักจมตัวเองตามแรงโน้มถ่วง หรือใช้เครื่องหมุนเหวี่ยง (centrifuge) เร่งการแยก',
+   examples:['แยกครีมจากนม','ตรวจเลือดในห้องปฏิบัติการ','ทำน้ำมะพร้าวใส']},
+  {icon:'🔬',name:'โครมาโทกราฟี',desc:'แยกสารผสมที่ซับซ้อน',
+   detail:'ใช้ความแตกต่างในการเคลื่อนที่ของสารบนตัวกลาง เช่น กระดาษ ซิลิกา เพื่อแยกสารผสม เหมาะกับสารปริมาณน้อย',
+   examples:['แยกสีผสมในหมึก','ตรวจสอบสารปนเปื้อนในอาหาร','วิเคราะห์ยาและสารเสพติด']},
+  {icon:'🌡️',name:'การกลั่น',desc:'แยกของเหลวที่มีจุดเดือดต่างกัน',
+   detail:'ต้มของเหลวผสมให้ไอระเหย แล้วควบแน่นไอกลับเป็นของเหลว โดยของเหลวที่มีจุดเดือดต่ำจะระเหยก่อน\n\nการกลั่นลำดับส่วน (Fractional distillation) ใช้แยกสารหลายชนิดพร้อมกัน',
+   examples:['กลั่นน้ำมันดิบ','ทำแอลกอฮอล์บริสุทธิ์','ผลิตน้ำมันหอมระเหย','กลั่นน้ำทะเลเป็นน้ำจืด']},
+  {icon:'⚗️',name:'การสกัด',desc:'แยกสารโดยใช้ตัวทำละลาย',
+   detail:'ใช้ตัวทำละลายที่เหมาะสมละลายสารที่ต้องการออกจากส่วนผสม อาศัยความสามารถในการละลายที่แตกต่างกัน',
+   examples:['สกัดสีจากพืช','สกัดน้ำมันจากเมล็ดพืช','สกัดสารสำคัญจากสมุนไพร']},
+  {icon:'🪨',name:'การร่อน',desc:'แยกอนุภาคขนาดต่างกัน',
+   detail:'ใช้ตะแกรงที่มีขนาดช่องแตกต่างกันแยกวัสดุที่มีขนาดอนุภาคต่างกันออกจากกัน',
+   examples:['ร่อนแป้ง','แยกทรายหยาบ-ละเอียด','คัดแยกเมล็ดพืช']},
+];
+
+const mg=document.getElementById('methodGrid');
+methods.forEach((m,i)=>{
+  const c=document.createElement('div');c.className='method-card';
+  c.innerHTML=`<div class="method-icon">${m.icon}</div><div class="method-name">${m.name}</div><div class="method-desc">${m.desc}</div>`;
+  c.onclick=()=>{
+    document.querySelectorAll('.method-card').forEach(x=>x.classList.remove('sel'));
+    c.classList.add('sel');
+    const d=document.getElementById('methodDetail');d.className='method-detail show';
+    d.innerHTML=`<h3>${m.icon} ${m.name}</h3><p>${m.detail.replace(/\n/g,'<br>')}</p><div style="margin-top:10px;">${m.examples.map(e=>`<span class="ex-tag">${e}</span>`).join('')}</div>`;
+  };
+  mg.appendChild(c);
+});
+
+// ===== ELEMENTS =====
+const elements=[
+  {num:1,sym:'H',name:'ไฮโดรเจน',type:'อโลหะ',mass:1.008,state:'แก๊ส',bg:'#E1F5EE',tc:'#04342C',note:'ธาตุที่เบาที่สุดในจักรวาล เป็นส่วนประกอบของน้ำ ใช้เป็นเชื้อเพลิงในอนาคต'},
+  {num:2,sym:'He',name:'ฮีเลียม',type:'แก๊สมีตระกูล',mass:4.003,state:'แก๊ส',bg:'#E6F1FB',tc:'#042C53',note:'ใช้เติมลูกโป่ง ไม่ติดไฟ ปฏิกิริยาได้น้อยมาก'},
+  {num:6,sym:'C',name:'คาร์บอน',type:'อโลหะ',mass:12.011,state:'ของแข็ง',bg:'#F1EFE8',tc:'#2C2C2A',note:'พบในสิ่งมีชีวิตทุกชนิด มีหลายอัญรูป เช่น เพชร แกรไฟต์'},
+  {num:7,sym:'N',name:'ไนโตรเจน',type:'อโลหะ',mass:14.007,state:'แก๊ส',bg:'#E1F5EE',tc:'#04342C',note:'พบมากที่สุดในอากาศ 78% ใช้ในอุตสาหกรรมปุ๋ย'},
+  {num:8,sym:'O',name:'ออกซิเจน',type:'อโลหะ',mass:15.999,state:'แก๊ส',bg:'#E1F5EE',tc:'#04342C',note:'จำเป็นต่อการหายใจ 21% ในอากาศ ช่วยในการเผาไหม้'},
+  {num:11,sym:'Na',name:'โซเดียม',type:'โลหะ',mass:22.990,state:'ของแข็ง',bg:'#EEEDFE',tc:'#26215C',note:'ทำปฏิกิริยารุนแรงกับน้ำ เป็นส่วนประกอบของเกลือแกง (NaCl)'},
+  {num:12,sym:'Mg',name:'แมกนีเซียม',type:'โลหะ',mass:24.305,state:'ของแข็ง',bg:'#EEEDFE',tc:'#26215C',note:'เผาไหม้ให้แสงสว่างจ้า ใช้ในดอกไม้ไฟ'},
+  {num:13,sym:'Al',name:'อะลูมิเนียม',type:'โลหะ',mass:26.982,state:'ของแข็ง',bg:'#EEEDFE',tc:'#26215C',note:'โลหะที่เบาและนำไฟฟ้าได้ดี ใช้ทำกระป๋องและอากาศยาน'},
+  {num:14,sym:'Si',name:'ซิลิกอน',type:'กึ่งโลหะ',mass:28.085,state:'ของแข็ง',bg:'#FAEEDA',tc:'#412402',note:'ใช้ทำชิปคอมพิวเตอร์และแผงโซลาร์เซลล์'},
+  {num:17,sym:'Cl',name:'คลอรีน',type:'อโลหะ',mass:35.45,state:'แก๊ส',bg:'#E1F5EE',tc:'#04342C',note:'ใช้ฆ่าเชื้อโรคในน้ำประปา เป็นส่วนประกอบของ NaCl'},
+  {num:20,sym:'Ca',name:'แคลเซียม',type:'โลหะ',mass:40.078,state:'ของแข็ง',bg:'#EEEDFE',tc:'#26215C',note:'สำคัญต่อกระดูกและฟัน พบในนมและผลิตภัณฑ์นม'},
+  {num:26,sym:'Fe',name:'เหล็ก',type:'โลหะ',mass:55.845,state:'ของแข็ง',bg:'#EEEDFE',tc:'#26215C',note:'มีสมบัติแม่เหล็ก ใช้ในการก่อสร้างและผลิตเหล็กกล้า'},
+  {num:29,sym:'Cu',name:'ทองแดง',type:'โลหะ',mass:63.546,state:'ของแข็ง',bg:'#FAECE7',tc:'#4A1B0C',note:'นำไฟฟ้าได้ดีมาก ใช้ทำสายไฟและท่อน้ำ'},
+  {num:30,sym:'Zn',name:'สังกะสี',type:'โลหะ',mass:65.38,state:'ของแข็ง',bg:'#EEEDFE',tc:'#26215C',note:'ใช้ชุบโลหะป้องกันสนิม เป็นส่วนประกอบของทองเหลือง'},
+  {num:79,sym:'Au',name:'ทอง',type:'โลหะ',mass:196.97,state:'ของแข็ง',bg:'#FAEEDA',tc:'#412402',note:'โลหะมีค่า ไม่เกิดสนิม ใช้ทำเครื่องประดับและวงจรไฟฟ้า'},
+  {num:80,sym:'Hg',name:'ปรอท',type:'โลหะ',mass:200.59,state:'ของเหลว',bg:'#EEEDFE',tc:'#26215C',note:'โลหะชนิดเดียวที่เป็นของเหลวที่อุณหภูมิห้อง มีพิษสูง'},
+];
+
+const eg=document.getElementById('elemGrid');
+elements.forEach(e=>{
+  const b=document.createElement('div');b.className='e-btn';
+  b.innerHTML=`<span class="e-num">${e.num}</span><span class="e-sym">${e.sym}</span>`;
+  b.onclick=()=>{
+    document.querySelectorAll('.e-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    const d=document.getElementById('elemDetail');d.className='elem-detail show';
+    d.innerHTML=`<div style="display:flex;align-items:center;gap:1rem;">
+      <div class="e-big" style="background:${e.bg};color:${e.tc};">
+        <span class="e-big-sym">${e.sym}</span><span class="e-big-num">${e.num}</span>
+      </div>
+      <div><div style="font-size:18px;font-weight:700;">${e.name}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px;">${e.type}</div></div></div>
+      <div class="e-info-grid">
+        <div class="e-info"><div class="e-label">มวลอะตอม</div><div class="e-val">${e.mass}</div></div>
+        <div class="e-info"><div class="e-label">สถานะ (25°C)</div><div class="e-val">${e.state}</div></div>
+        <div class="e-info" style="grid-column:1/-1;"><div class="e-label">ข้อมูลน่ารู้</div><div class="e-val" style="font-size:13px;font-weight:400;margin-top:4px;line-height:1.7;">${e.note}</div></div>
+      </div>`;
+  };
+  eg.appendChild(b);
+});
+
+// ===== QUIZ — 50 QUESTIONS, RANDOM 10 =====
+const allQuestions=[
+  // --- กลุ่มที่ 1: การจำแนกสาร ---
+  {q:'น้ำ (H₂O) จัดเป็นสารประเภทใด?',opts:['ธาตุ','สารประกอบ','สารผสม','คอลลอยด์'],ans:1,explain:'น้ำประกอบด้วยธาตุ H และ O รวมตัวกันทางเคมีในอัตราส่วนคงที่ จึงเป็นสารประกอบ'},
+  {q:'ข้อใดเป็นธาตุ (Element)?',opts:['น้ำ','ทองแดง','เกลือแกง','น้ำตาล'],ans:1,explain:'ทองแดง (Cu) เป็นธาตุ ส่วนน้ำ เกลือแกง และน้ำตาลเป็นสารประกอบ'},
+  {q:'ข้อใดเป็นสารผสมเนื้อเดียว (Homogeneous mixture)?',opts:['นม','น้ำเกลือ','หมอก','ทราย+เหล็ก'],ans:1,explain:'น้ำเกลือมีส่วนประกอบกระจายสม่ำเสมอตลอด จึงเป็นสารผสมเนื้อเดียว'},
+  {q:'ข้อใดเป็นสารบริสุทธิ์?',opts:['อากาศ','น้ำมะนาว','เกลือแกง (NaCl)','นม'],ans:2,explain:'เกลือแกง (NaCl) เป็นสารประกอบบริสุทธิ์ มีสูตรเคมีแน่นอน ส่วนอีก 3 ข้อเป็นสารผสม'},
+  {q:'อากาศจัดเป็นสารประเภทใด?',opts:['ธาตุ','สารประกอบ','สารผสมเนื้อเดียว','สารบริสุทธิ์'],ans:2,explain:'อากาศเป็นสารผสมเนื้อเดียวของแก๊สหลายชนิด เช่น N₂ O₂ CO₂ มีสัดส่วนสม่ำเสมอ'},
+  {q:'สารผสมเนื้อผสม (Heterogeneous mixture) คืออะไร?',opts:['สารที่มีองค์ประกอบสม่ำเสมอ','สารที่มองเห็นส่วนประกอบต่างกัน','สารบริสุทธิ์ชนิดหนึ่ง','สารที่แยกไม่ได้'],ans:1,explain:'สารผสมเนื้อผสมมีส่วนประกอบไม่สม่ำเสมอ มองเห็นความแตกต่างได้ เช่น น้ำกับน้ำมัน ทรายกับเหล็ก'},
+  {q:'คอลลอยด์ (Colloid) แตกต่างจากสารละลายอย่างไร?',opts:['คอลลอยด์ละลายน้ำได้ดีกว่า','คอลลอยด์มีอนุภาคขนาดใหญ่กว่า','คอลลอยด์เป็นสารบริสุทธิ์','คอลลอยด์ไม่มีอนุภาคแขวนลอย'],ans:1,explain:'คอลลอยด์มีขนาดอนุภาค 1-1000 nm ใหญ่กว่าสารละลาย แต่เล็กกว่าสารแขวนลอย'},
+  {q:'ข้อใดเป็นตัวอย่างของคอลลอยด์?',opts:['น้ำเกลือ','น้ำตาลในน้ำ','นม','เหล็กในกรด'],ans:2,explain:'นมเป็นคอลลอยด์ประเภทอิมัลชัน มีไขมันแขวนลอยอยู่ในน้ำ'},
+  {q:'ธาตุแตกต่างจากสารประกอบอย่างไร?',opts:['ธาตุมีมวลมากกว่า','ธาตุประกอบด้วยอะตอมชนิดเดียวกัน','ธาตุละลายน้ำได้ดีกว่า','ธาตุมีสถานะเป็นของแข็งเสมอ'],ans:1,explain:'ธาตุประกอบด้วยอะตอมชนิดเดียวกัน ส่วนสารประกอบประกอบด้วยธาตุตั้งแต่ 2 ชนิดขึ้นไปรวมตัวกันทางเคมี'},
+  {q:'ข้อใดเป็นสูตรเคมีของเกลือแกง?',opts:['KCl','NaCl','MgCl₂','CaCl₂'],ans:1,explain:'เกลือแกงหรือโซเดียมคลอไรด์มีสูตรเคมีว่า NaCl ประกอบด้วยโซเดียม (Na) และคลอรีน (Cl)'},
+  // --- กลุ่มที่ 2: การแยกสาร ---
+  {q:'วิธีใดเหมาะสมที่สุดในการแยกน้ำมันออกจากน้ำ?',opts:['การกรอง','การระเหย','การกลั่น','การใช้กรวยแยก'],ans:3,explain:'น้ำมันและน้ำไม่ละลายกัน ใช้กรวยแยก (separating funnel) แยกชั้นของเหลวได้'},
+  {q:'การกลั่นลำดับส่วนใช้แยกสารโดยอาศัยสมบัติใด?',opts:['จุดเดือดที่ต่างกัน','ความหนาแน่น','ขนาดอนุภาค','การนำไฟฟ้า'],ans:0,explain:'การกลั่นลำดับส่วนอาศัยจุดเดือดที่แตกต่างกัน เช่น การกลั่นน้ำมันดิบได้ผลิตภัณฑ์หลายชนิด'},
+  {q:'การกรองใช้แยกสารใด?',opts:['ของเหลวสองชนิดที่ไม่ละลายกัน','ของแข็งออกจากของเหลว','แก๊สออกจากของเหลว','ธาตุออกจากสารประกอบ'],ans:1,explain:'การกรองใช้วัสดุมีรูพรุนแยกอนุภาคของแข็งออกจากของเหลว'},
+  {q:'การทำเกลือจากน้ำทะเลใช้วิธีใด?',opts:['การกรอง','การตกผลึก/ระเหย','การกลั่น','โครมาโทกราฟี'],ans:1,explain:'การทำเกลือจากน้ำทะเลใช้การระเหยน้ำออก แล้วเกลือจะตกผลึก'},
+  {q:'โครมาโทกราฟีอาศัยหลักการใด?',opts:['จุดเดือด','ความเร็วในการเคลื่อนที่บนตัวกลาง','ขนาดอนุภาค','สมบัติแม่เหล็ก'],ans:1,explain:'โครมาโทกราฟีอาศัยความแตกต่างของอัตราการเคลื่อนที่ของสารบนตัวกลาง เช่น กระดาษ'},
+  {q:'วิธีใดใช้แยกผงเหล็กออกจากทราย?',opts:['การกรอง','การตกตะกอน','การใช้แม่เหล็ก','การระเหย'],ans:2,explain:'เหล็กมีสมบัติแม่เหล็ก จึงใช้แม่เหล็กดูดแยกออกจากทรายที่ไม่มีสมบัติแม่เหล็ก'},
+  {q:'การตกตะกอนแตกต่างจากการกรองอย่างไร?',opts:['การตกตะกอนใช้ความร้อน','การตกตะกอนอาศัยแรงโน้มถ่วงหรือการหมุน','การตกตะกอนเร็วกว่าเสมอ','ไม่มีความแตกต่าง'],ans:1,explain:'การตกตะกอนอาศัยแรงโน้มถ่วงทำให้อนุภาคหนักจมลง ส่วนการกรองใช้ตัวกรองกั้น'},
+  {q:'การสกัดด้วยตัวทำละลายใช้เพื่ออะไร?',opts:['แยกสารที่มีจุดเดือดต่างกัน','แยกสารโดยอาศัยความสามารถในการละลาย','แยกสารโดยขนาดอนุภาค','แยกสารโดยสมบัติแม่เหล็ก'],ans:1,explain:'การสกัดใช้ตัวทำละลายที่เหมาะสมละลายสารที่ต้องการ อาศัยความแตกต่างในการละลาย'},
+  {q:'ในการกลั่นน้ำมันดิบ ผลิตภัณฑ์ใดออกมาก่อน?',opts:['น้ำมันเตา','น้ำมันดีเซล','แก๊ส LPG','น้ำมันหล่อลื่น'],ans:2,explain:'แก๊ส LPG มีจุดเดือดต่ำที่สุด จึงระเหยออกมาก่อนในการกลั่นลำดับส่วน'},
+  {q:'การร่อนใช้แยกสารโดยอาศัยอะไร?',opts:['สมบัติแม่เหล็ก','ขนาดอนุภาค','ความหนาแน่น','จุดเดือด'],ans:1,explain:'การร่อนใช้ตะแกรงแยกอนุภาคที่มีขนาดต่างกัน อนุภาคเล็กลอดผ่านตะแกรงได้'},
+  // --- กลุ่มที่ 3: ธาตุและตารางธาตุ ---
+  {q:'ธาตุในข้อใดเป็นอโลหะ?',opts:['เหล็ก (Fe)','ทองแดง (Cu)','ออกซิเจน (O)','อะลูมิเนียม (Al)'],ans:2,explain:'ออกซิเจนเป็นอโลหะ ส่วนเหล็ก ทองแดง และอะลูมิเนียมเป็นโลหะ'},
+  {q:'ตารางธาตุจัดเรียงธาตุตามอะไร?',opts:['มวลอะตอม','เลขอะตอม','ชื่อธาตุ','สถานะ'],ans:1,explain:'ตารางธาตุปัจจุบันจัดเรียงตามเลขอะตอม (จำนวนโปรตอน) จากน้อยไปมาก'},
+  {q:'ธาตุหมู่ 0 หรือหมู่ 18 คือธาตุประเภทใด?',opts:['โลหะแอลคาไล','โลหะแอลคาไลน์เอิร์ท','แฮโลเจน','แก๊สมีตระกูล'],ans:3,explain:'ธาตุหมู่ 18 คือแก๊สมีตระกูล (Noble gas) เช่น He Ne Ar มีเวเลนซ์อิเล็กตรอนครบ ไม่ทำปฏิกิริยาเคมี'},
+  {q:'ธาตุใดพบมากที่สุดในเปลือกโลก?',opts:['เหล็ก','ซิลิกอน','ออกซิเจน','อะลูมิเนียม'],ans:2,explain:'ออกซิเจนพบมากที่สุดในเปลือกโลก ประมาณ 46% โดยมวล'},
+  {q:'เลขอะตอมของธาตุคืออะไร?',opts:['จำนวนนิวตรอน','จำนวนโปรตอน','จำนวนอิเล็กตรอน+โปรตอน','มวลของอะตอม'],ans:1,explain:'เลขอะตอม (Atomic number) คือจำนวนโปรตอนในนิวเคลียส ทำให้ธาตุแต่ละชนิดมีเลขอะตอมเฉพาะตัว'},
+  {q:'ซิลิกอน (Si) จัดเป็นธาตุประเภทใด?',opts:['โลหะ','อโลหะ','กึ่งโลหะ','แก๊สมีตระกูล'],ans:2,explain:'ซิลิกอนเป็นกึ่งโลหะ (Metalloid) มีสมบัติระหว่างโลหะและอโลหะ ใช้ทำชิปอิเล็กทรอนิกส์'},
+  {q:'แฮโลเจนอยู่ในหมู่ใดของตารางธาตุ?',opts:['หมู่ 1','หมู่ 2','หมู่ 17','หมู่ 18'],ans:2,explain:'แฮโลเจน (Halogen) อยู่หมู่ 17 เช่น F Cl Br I มีเวเลนซ์อิเล็กตรอน 7 ตัว ทำปฏิกิริยาได้ดี'},
+  {q:'ธาตุใดมีสัญลักษณ์ว่า Fe?',opts:['ฟลูออรีน','เหล็ก','ฟอสฟอรัส','แฟรนเซียม'],ans:1,explain:'Fe มาจากภาษาละตินว่า Ferrum แปลว่าเหล็ก (Iron)'},
+  {q:'ธาตุใดเป็นโลหะเหลวที่อุณหภูมิห้อง?',opts:['โซเดียม','ปรอท','แกลเลียม','อะลูมิเนียม'],ans:1,explain:'ปรอท (Hg) เป็นโลหะเพียงชนิดเดียวที่เป็นของเหลวที่อุณหภูมิห้อง มีจุดหลอมเหลว -39°C'},
+  {q:'คาร์บอน (C) มีอัญรูปใดบ้าง?',opts:['เฉพาะเพชร','เฉพาะแกรไฟต์','ทั้งเพชรและแกรไฟต์','ไม่มีอัญรูป'],ans:2,explain:'คาร์บอนมีหลายอัญรูป เช่น เพชร แกรไฟต์ และฟูลเลอรีน ล้วนเป็นคาร์บอนล้วนแต่โครงสร้างต่างกัน'},
+  {q:'ธาตุโลหะแอลคาไลอยู่ในหมู่ใด?',opts:['หมู่ 1','หมู่ 2','หมู่ 17','หมู่ 18'],ans:0,explain:'โลหะแอลคาไล (Alkali metals) อยู่หมู่ 1 เช่น Li Na K มีเวเลนซ์อิเล็กตรอน 1 ตัว ทำปฏิกิริยารุนแรงกับน้ำ'},
+  // --- กลุ่มที่ 4: สมบัติและสถานะของสาร ---
+  {q:'การเปลี่ยนสถานะจากของเหลวเป็นแก๊สเรียกว่าอะไร?',opts:['การหลอมเหลว','การระเหย','การควบแน่น','การแข็งตัว'],ans:1,explain:'การเปลี่ยนจากของเหลวเป็นแก๊สเรียกว่าการระเหย (Evaporation) หรือการกลายเป็นไอ'},
+  {q:'สารชนิดใดมีรูปร่างและปริมาตรแน่นอน?',opts:['แก๊ส','ของเหลว','ของแข็ง','พลาสมา'],ans:2,explain:'ของแข็งมีรูปร่างและปริมาตรแน่นอน อนุภาคอยู่ชิดกัน สั่นในตำแหน่งคงที่'},
+  {q:'ความหนาแน่นของน้ำบริสุทธิ์ที่ 4°C มีค่าเท่าไร?',opts:['0.5 g/mL','1.0 g/mL','1.5 g/mL','2.0 g/mL'],ans:1,explain:'น้ำบริสุทธิ์ที่ 4°C มีความหนาแน่น 1.0 g/mL หรือ 1000 kg/m³ ซึ่งเป็นค่าสูงสุด'},
+  {q:'จุดเดือดของน้ำที่ความดันบรรยากาศปกติคือกี่องศาเซลเซียส?',opts:['50°C','80°C','100°C','120°C'],ans:2,explain:'น้ำเดือดที่ 100°C (373 K) ที่ความดัน 1 atm หรือ 101.325 kPa'},
+  {q:'ข้อใดเป็นสมบัติทางเคมีของสาร?',opts:['ความหนาแน่น','จุดหลอมเหลว','การติดไฟ','สี'],ans:2,explain:'การติดไฟเป็นสมบัติทางเคมีที่เกิดขึ้นเมื่อสารทำปฏิกิริยากับออกซิเจน ส่วนอีก 3 ข้อเป็นสมบัติทางกายภาพ'},
+  {q:'ข้อใดเป็นการเปลี่ยนแปลงทางเคมี?',opts:['น้ำแข็งละลาย','ตัดกระดาษ','เผาไม้','แก้วแตก'],ans:2,explain:'การเผาไม้เกิดปฏิกิริยาเคมี สร้างสารใหม่ (CO₂ H₂O) ส่วนอีก 3 ข้อเป็นการเปลี่ยนแปลงทางกายภาพ'},
+  {q:'สารละลายกรดมีค่า pH อย่างไร?',opts:['มากกว่า 7','น้อยกว่า 7','เท่ากับ 7','มากกว่า 14'],ans:1,explain:'สารละลายกรดมีค่า pH น้อยกว่า 7 สารละลายด่างมี pH มากกว่า 7 และน้ำบริสุทธิ์มี pH = 7'},
+  {q:'แก๊สใดพบมากที่สุดในอากาศ?',opts:['ออกซิเจน','ไนโตรเจน','คาร์บอนไดออกไซด์','อาร์กอน'],ans:1,explain:'ไนโตรเจน (N₂) พบมากที่สุดในอากาศ ประมาณ 78% รองลงมาคือออกซิเจน 21%'},
+  // --- กลุ่มที่ 5: สารประกอบและสูตรเคมี ---
+  {q:'H₂SO₄ คือสารชนิดใด?',opts:['กรดไฮโดรคลอริก','กรดซัลฟิวริก','กรดไนตริก','กรดอะซิติก'],ans:1,explain:'H₂SO₄ คือกรดซัลฟิวริก ประกอบด้วย H S และ O ใช้ในแบตเตอรี่และอุตสาหกรรม'},
+  {q:'CO₂ ประกอบด้วยธาตุใดบ้าง?',opts:['คาร์บอนกับไฮโดรเจน','คาร์บอนกับออกซิเจน','แคลเซียมกับออกซิเจน','โคบอลต์กับออกซิเจน'],ans:1,explain:'CO₂ คือคาร์บอนไดออกไซด์ ประกอบด้วยคาร์บอน (C) 1 อะตอม และออกซิเจน (O) 2 อะตอม'},
+  {q:'สูตรเคมีของน้ำตาลกลูโคสคือข้อใด?',opts:['C₆H₁₂O₆','C₁₂H₂₂O₁₁','C₂H₅OH','CH₄'],ans:0,explain:'กลูโคสมีสูตร C₆H₁₂O₆ เป็นน้ำตาลโมเลกุลเดี่ยวที่ร่างกายใช้เป็นพลังงาน'},
+  {q:'CH₄ คือสารชนิดใด?',opts:['มีเทน','โพรเพน','บิวเทน','อีเทน'],ans:0,explain:'CH₄ คือมีเทน แก๊สธรรมชาติที่ใช้เป็นเชื้อเพลิง ประกอบด้วย C 1 อะตอม และ H 4 อะตอม'},
+  {q:'สนิมเหล็กมีสูตรเคมีคือข้อใด?',opts:['Fe','FeO','Fe₂O₃','Fe₃O₄'],ans:2,explain:'สนิมเหล็กหรือเหล็กออกไซด์มีสูตร Fe₂O₃ เกิดจากเหล็กทำปฏิกิริยากับออกซิเจนและน้ำ'},
+  {q:'สารประกอบใดเป็นส่วนประกอบหลักของแก้ว?',opts:['SiO₂','Al₂O₃','CaCO₃','NaCl'],ans:0,explain:'แก้วทำมาจากซิลิกาหรือซิลิกอนไดออกไซด์ (SiO₂) เป็นหลัก ผสมกับสารอื่น'},
+  {q:'NaOH คือสารชนิดใด?',opts:['กรด','เกลือ','ด่าง','น้ำ'],ans:2,explain:'NaOH คือโซเดียมไฮดรอกไซด์ เป็นด่างแก่ ใช้ในการผลิตสบู่และทำความสะอาด'},
+  {q:'ปฏิกิริยาใดเกิดการเปลี่ยนแปลงพลังงาน?',opts:['เฉพาะการเผาไหม้','เฉพาะการสังเคราะห์แสง','ปฏิกิริยาเคมีทุกชนิด','เฉพาะการระเบิด'],ans:2,explain:'ปฏิกิริยาเคมีทุกชนิดมีการเปลี่ยนแปลงพลังงาน บางปฏิกิริยาดูดความร้อน บางปฏิกิริยาคายความร้อน'},
+  {q:'CaCO₃ คือสารชนิดใด?',opts:['เกลือแกง','หินปูน','น้ำตาล','เบกกิ้งโซดา'],ans:1,explain:'CaCO₃ คือแคลเซียมคาร์บอเนต หรือหินปูน พบในหอย ปะการัง และหินปูน'},
+  {q:'โมเลกุลของน้ำมีรูปร่างอย่างไร?',opts:['เส้นตรง','โค้งงอ (V-shape)','สามเหลี่ยม','ทรงสี่หน้า'],ans:1,explain:'โมเลกุลน้ำ (H₂O) มีรูปร่างโค้งงอ (V-shape หรือ bent) เนื่องจากคู่อิเล็กตรอนอิสระของออกซิเจน'},
+  {q:'สารใดใช้เป็นตัวบ่งชี้ความเป็นกรด-เบส?',opts:['ลิตมัส','แป้ง','น้ำตาล','เกลือ'],ans:0,explain:'ลิตมัสเป็นตัวบ่งชี้ (indicator) ธรรมชาติ เปลี่ยนเป็นสีแดงในกรด และสีน้ำเงินในด่าง'},
+];
+
+let currentQuestions=[];
+let quizAnswered=[];
+let quizScore=0;
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+function startQuiz(){
+  currentQuestions=shuffle(allQuestions).slice(0,10);
+  quizAnswered=currentQuestions.map(()=>({answered:false,selected:null}));
+  quizScore=0;
+  document.getElementById('quizFinish').classList.remove('show');
+  updateQuizInfo();
+  renderQuiz();
+}
+
+function updateQuizInfo(){
+  const done=quizAnswered.filter(s=>s.answered).length;
+  document.getElementById('qCount').textContent=`${done} / 10`;
+  document.getElementById('qBar').style.width=(done/10*100)+'%';
+  document.getElementById('qScore').textContent=`คะแนน: ${quizScore}`;
+}
+
+function renderQuiz(){
+  const cont=document.getElementById('quizContainer');
+  cont.innerHTML='';
+  currentQuestions.forEach((q,i)=>{
+    const box=document.createElement('div');box.className='quiz-q-card';
+    box.innerHTML=`<div class="quiz-q-text">${i+1}. ${q.q}</div><div class="quiz-opts" id="opts-${i}"></div><div class="explain" id="exp-${i}">${q.explain}</div>`;
+    q.opts.forEach((o,j)=>{
+      const btn=document.createElement('button');btn.className='quiz-opt';btn.textContent=o;
+      if(quizAnswered[i].answered){
+        btn.disabled=true;
+        if(j===q.ans)btn.classList.add('correct');
+        else if(j===quizAnswered[i].selected)btn.classList.add('wrong');
+      }
+      btn.onclick=()=>{
+        if(quizAnswered[i].answered)return;
+        quizAnswered[i].answered=true;quizAnswered[i].selected=j;
+        if(j===q.ans)quizScore++;
+        renderQuiz();updateQuizInfo();
+        if(quizAnswered.every(s=>s.answered))setTimeout(showFinish,400);
+      };
+      box.querySelector(`#opts-${i}`).appendChild(btn);
+    });
+    if(quizAnswered[i].answered)box.querySelector(`#exp-${i}`).classList.add('show');
+    cont.appendChild(box);
+  });
+}
+
+function showFinish(){
+  const pct=Math.round(quizScore/10*100);
+  const msgs=['ต้องฝึกฝนเพิ่มเติมนะ 💪','พยายามต่อไป! 📚','เริ่มดีขึ้นแล้ว! 👍','ดีมาก! 🌟','เก่งมาก! ⭐','ยอดเยี่ยม! 🏆'];
+  document.getElementById('finalScore').textContent=`${quizScore} / 10`;
+  document.getElementById('scoreMsg').textContent=msgs[Math.min(Math.floor(pct/20),5)]+` (${pct}%)`;
+  document.getElementById('quizFinish').classList.add('show');
+  document.getElementById('quizFinish').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+startQuiz();
+</script>
+</body>
+</html>
